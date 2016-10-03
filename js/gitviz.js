@@ -1,9 +1,4 @@
-function loadChart(){
-  visualizeHourlyAdditionsDeletions();
-}
-
-
-function visualizeHourlyAdditionsDeletions(){
+function initChart(){
   var margin = { top: 30, right: 0, bottom: 0, left: 30 },
       width = 960 - margin.left - margin.right,
       height = 430 - margin.top - margin.bottom,
@@ -41,6 +36,7 @@ function visualizeHourlyAdditionsDeletions(){
         .attr("transform", "translate(" + gridSize / 2 + ", -6)")
         .attr("class", function(d, i) { return "timeLabel mono axis axis-worktime"; });
 
+
   // //Add circles to the circleGroup
   // var rectangles = rectGroup.selectAll("rect")
   //                           .data(rectangleData)
@@ -54,9 +50,14 @@ function visualizeHourlyAdditionsDeletions(){
   //                           .attr("width", function (d) { return d.width; })
   //                           .style("fill", function(d) { return d.color; });
 
-
-
-
 }
 
-loadChart();
+
+function getHourlyCommitsFromGithub(){
+  d3.json("https://api.github.com/repos/tungnk1993/scrapy/stats/punch_card", function(json){
+    createHeatMap(json);
+  });
+}
+
+initChart();
+getHourlyCommitsFromGithub();
