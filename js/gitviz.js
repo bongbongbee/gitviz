@@ -6,7 +6,10 @@ var margin = { top: 30, right: 0, bottom: 100, left: 30 },
     buckets = 9,
     colors = ["#ffffd9","#edf8b1","#c7e9b4","#7fcdbb","#41b6c4","#1d91c0","#225ea8","#253494","#081d58"],
     days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],
-    times = ["12am", "1am", "2am", "3am", "4am", "5am", "6am", "7am", "8am", "9am", "10am", "11am", "12pm", "1pm", "2pm", "3pm", "4pm", "5pm", "6pm", "7pm", "8pm", "9pm", "10pm", "11pm"];
+    times = ["12am", "1am", "2am", "3am", "4am", "5am", "6am", "7am", "8am", "9am", "10am", "11am", "12pm", "1pm", "2pm", "3pm", "4pm", "5pm", "6pm", "7pm", "8pm", "9pm", "10pm", "11pm"],
+    defaultUrl = 'https://api.github.com/repos/',
+    defaultUserRepo = 'tungnk1993/scrapy',
+    defaultStats = '/stats/punch_card';
 
 var dayIndex = 0;
 var hourIndex = 1;
@@ -52,8 +55,15 @@ function initChart(){
 }
 
 
-function getHourlyCommitsFromGithub(){
-  d3.json("https://api.github.com/repos/tungnk1993/scrapy/stats/punch_card", function(json){
+function getHourlyCommitsFromGithub(userRepo){
+  if(userRepo.length <= 0){
+    userRepo = defaultUserRepo;
+  }
+
+  var url = defaultUrl + userRepo + defaultStats;
+
+  console.log('Getting data from: '+ userRepo);
+  d3.json(url, function(json){
     createHeatMap(json);
   });
 }
@@ -87,6 +97,7 @@ function createHeatMap(data){
           .attr("width", gridSize)
           .attr("height", gridSize)
           .style("fill", colors[0])
+          .merge(cards)
           .on('mouseover', tip.show)
           .on('mouseout', tip.hide)
           .transition().duration(1000)
@@ -94,21 +105,13 @@ function createHeatMap(data){
                 return colorScale(d[commitsIndex]);
               });
 
-
-      //append title with commit value
-      svgContainer.selectAll("rect").append("title").text(function(d) {
-          // console.log(d[commitsIndex]);
-         return d[commitsIndex];
-       });
-
-
-
       var legend = svgContainer.selectAll(".legend")
           .data([0].concat(colorScale.quantiles()), function(d) { return d; });
 
+      legend.exit().remove();
+
       legend.enter().append("g")
           .attr("class", "legend");
-
 
 
       svgContainer.selectAll(".legend").append("rect")
@@ -124,9 +127,14 @@ function createHeatMap(data){
         .attr("x", function(d, i) { return legendElementWidth * i; })
         .attr("y", height + gridSize);
 
-      legend.exit().remove();
 
 }
 
+function visualizeClickHandler(){
+  var userRepo = document.getElementById("inputUserRepo").value;
+  getHourlyCommitsFromGithub(userRepo);
+  console.log(userRepo);
+}
+
 initChart();
-getHourlyCommitsFromGithub();
+getHourlyCommitsFromGithub(defaultUserRepo);
