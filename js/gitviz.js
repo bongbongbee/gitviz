@@ -1,16 +1,18 @@
+var margin = { top: 30, right: 0, bottom: 100, left: 30 },
+    width = 960 - margin.left - margin.right,
+    height = 430 - margin.top - margin.bottom,
+    gridSize = Math.floor(width / 24),
+    legendElementWidth = gridSize*2,
+    buckets = 9,
+    colors = ["#ffffd9","#edf8b1","#c7e9b4","#7fcdbb","#41b6c4","#1d91c0","#225ea8","#253494","#081d58"],
+    days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],
+    times = ["12am", "1am", "2am", "3am", "4am", "5am", "6am", "7am", "8am", "9am", "10am", "11am", "12pm", "1pm", "2pm", "3pm", "4pm", "5pm", "6pm", "7pm", "8pm", "9pm", "10pm", "11pm"];
+
+var svgContainer;
+
 function initChart(){
-  var margin = { top: 30, right: 0, bottom: 0, left: 30 },
-      width = 960 - margin.left - margin.right,
-      height = 430 - margin.top - margin.bottom,
-      gridSize = Math.floor(width / 24),
-      legendElementWidth = gridSize*2,
-      buckets = 9,
-      colors = ["#ffffd9","#edf8b1","#c7e9b4","#7fcdbb","#41b6c4","#1d91c0","#225ea8","#253494","#081d58"],
-      days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],
-      times = ["1am", "2am", "3am", "4am", "5am", "6am", "7am", "8am", "9am", "10am", "11am", "12am", "1pm", "2pm", "3pm", "4pm", "5pm", "6pm", "7pm", "8pm", "9pm", "10pm", "11pm", "12pm"];
 
-
-  var svgContainer = d3.select(".chart").append("svg")
+  svgContainer = d3.select(".chart").append("svg")
                                        .attr("width",width + margin.left + margin.right)
                                        .attr("height",height + margin.top + margin.bottom)
                                        .append("g")
@@ -57,6 +59,78 @@ function getHourlyCommitsFromGithub(){
   d3.json("https://api.github.com/repos/tungnk1993/scrapy/stats/punch_card", function(json){
     createHeatMap(json);
   });
+}
+
+function createHeatMap(data){
+  var dayIndex = 0;
+  var hourIndex = 1;
+  var commitsIndex = 2;
+
+      var colorScale = d3.scaleQuantile()
+          .domain([0, buckets - 1, d3.max(data,
+            function (d) {
+              return d[commitsIndex];
+            })])
+          .range(colors);
+
+
+      var cards = svgContainer.selectAll(".hour")
+          .data(data, function(d) {
+            return d[dayIndex]+':'+d[hourIndex];
+          });
+
+
+      // EXIT old elements not present in new data.
+      cards.exit().remove();
+
+
+      cards.enter()
+          .append("rect")
+          .attr("x", function(d) { return (d[hourIndex]) * gridSize; })
+          .attr("y", function(d) { return (d[dayIndex]) * gridSize; })
+          .attr("rx", 4)
+          .attr("ry", 4)
+          .attr("class", "hour bordered")
+          .attr("width", gridSize)
+          .attr("height", gridSize)
+          .style("fill", colors[0])
+          .transition().duration(1000)
+              .style("fill", function(d) {
+                return colorScale(d[commitsIndex]);
+              });
+
+
+      //append title with commit value
+      svgContainer.selectAll("rect").append("title").text(function(d) {
+          // console.log(d[commitsIndex]);
+         return d[commitsIndex];
+       });
+
+
+
+      var legend = svgContainer.selectAll(".legend")
+          .data([0].concat(colorScale.quantiles()), function(d) { return d; });
+
+      legend.enter().append("g")
+          .attr("class", "legend");
+
+
+
+      svgContainer.selectAll(".legend").append("rect")
+        .attr("x", function(d, i) { return legendElementWidth * i; })
+        .attr("y", height)
+        .attr("width", legendElementWidth)
+        .attr("height", gridSize / 2)
+        .style("fill", function(d, i) { return colors[i]; });
+
+      svgContainer.selectAll(".legend").append("text")
+        .attr("class", "mono")
+        .text(function(d) { return "≥ " + Math.round(d); })
+        .attr("x", function(d, i) { return legendElementWidth * i; })
+        .attr("y", height + gridSize);
+
+      legend.exit().remove();
+
 }
 
 initChart();
