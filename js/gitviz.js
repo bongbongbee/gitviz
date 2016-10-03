@@ -8,15 +8,27 @@ var margin = { top: 30, right: 0, bottom: 100, left: 30 },
     days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],
     times = ["12am", "1am", "2am", "3am", "4am", "5am", "6am", "7am", "8am", "9am", "10am", "11am", "12pm", "1pm", "2pm", "3pm", "4pm", "5pm", "6pm", "7pm", "8pm", "9pm", "10pm", "11pm"];
 
+var dayIndex = 0;
+var hourIndex = 1;
+var commitsIndex = 2;
+
+var tip = d3.tip()
+  .attr('class', 'd3-tip')
+  .offset([-10, 0])
+  .html(function(d) {
+    return "<strong>Commits:</strong> <span style='color:white'>" + d[commitsIndex] + "</span>";
+  });
+
 var svgContainer;
 
 function initChart(){
-
   svgContainer = d3.select(".chart").append("svg")
                                        .attr("width",width + margin.left + margin.right)
                                        .attr("height",height + margin.top + margin.bottom)
                                        .append("g")
                                        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+  svgContainer.call(tip);
 
   var dayLabels = svgContainer.selectAll(".dayLabel")
       .data(days)
@@ -37,21 +49,6 @@ function initChart(){
         .style("text-anchor", "middle")
         .attr("transform", "translate(" + gridSize / 2 + ", -6)")
         .attr("class", function(d, i) { return "timeLabel mono axis axis-worktime"; });
-
-
-  // //Add circles to the circleGroup
-  // var rectangles = rectGroup.selectAll("rect")
-  //                           .data(rectangleData)
-  //                           .enter()
-  //                           .append("rect");
-  //
-  // var rectangleAttributes = rectangles
-  //                           .attr("x", function (d) { return d.rx; })
-  //                           .attr("y", function (d) { return d.ry; })
-  //                           .attr("height", function (d) { return d.height; })
-  //                           .attr("width", function (d) { return d.width; })
-  //                           .style("fill", function(d) { return d.color; });
-
 }
 
 
@@ -62,10 +59,6 @@ function getHourlyCommitsFromGithub(){
 }
 
 function createHeatMap(data){
-  var dayIndex = 0;
-  var hourIndex = 1;
-  var commitsIndex = 2;
-
       var colorScale = d3.scaleQuantile()
           .domain([0, buckets - 1, d3.max(data,
             function (d) {
@@ -94,6 +87,8 @@ function createHeatMap(data){
           .attr("width", gridSize)
           .attr("height", gridSize)
           .style("fill", colors[0])
+          .on('mouseover', tip.show)
+          .on('mouseout', tip.hide)
           .transition().duration(1000)
               .style("fill", function(d) {
                 return colorScale(d[commitsIndex]);
