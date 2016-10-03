@@ -4,7 +4,7 @@ function loadChart(){
 
 
 function visualizeHourlyAdditionsDeletions(){
-  var margin = { top: 0, right: 0, bottom: 100, left: 30 },
+  var margin = { top: 30, right: 0, bottom: 0, left: 30 },
       width = 960 - margin.left - margin.right,
       height = 430 - margin.top - margin.bottom,
       gridSize = Math.floor(width / 24),
@@ -16,8 +16,8 @@ function visualizeHourlyAdditionsDeletions(){
 
 
   var svgContainer = d3.select(".chart").append("svg")
-                                       .attr("width",width)
-                                       .attr("height",height)
+                                       .attr("width",width + margin.left + margin.right)
+                                       .attr("height",height + margin.top + margin.bottom)
                                        .append("g")
                                        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
@@ -29,7 +29,17 @@ function visualizeHourlyAdditionsDeletions(){
         .attr("y", function (d, i) { return i * gridSize; })
         .style("text-anchor", "end")
         .attr("transform", "translate(-6," + gridSize / 1.5 + ")")
-        .attr("class", function (d, i) { return ((i >= 1 && i <= 5) ? "dayLabel mono axis axis-workweek" : "dayLabel mono axis"); });
+        .attr("class", function (d, i) { return ((i >= 1 && i <= 5  ) ? "dayLabel mono axis axis-workweek" : "dayLabel mono axis"); });
+
+  var timeLabels = svgContainer.selectAll(".timeLabel")
+      .data(times)
+      .enter().append("text")
+        .text(function(d) { return d; })
+        .attr("x", function(d, i) { return i * gridSize; })
+        .attr("y", 0)
+        .style("text-anchor", "middle")
+        .attr("transform", "translate(" + gridSize / 2 + ", -6)")
+        .attr("class", function(d, i) { return "timeLabel mono axis axis-worktime"; });
 
   // //Add circles to the circleGroup
   // var rectangles = rectGroup.selectAll("rect")
